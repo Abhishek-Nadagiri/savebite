@@ -38,20 +38,6 @@ export async function estimatePlatesSaved(
   return estimatePlatesSavedFlow(input);
 }
 
-const prompt = ai.definePrompt({
-  name: 'estimatePlatesSavedExplanationPrompt',
-  output: {
-    schema: z.object({
-      explanation: z
-        .string()
-        .describe('An explanation of the heuristic used to estimate the number of plates saved.'),
-    }),
-  },
-  prompt: `You are an AI assistant for a food-saving app. Your goal is to provide a brief, encouraging explanation for how "plates saved" are estimated.
-  The estimation is a simple heuristic: we assume that for every two leftover food posts, one plate of food is saved on average.
-  Please provide a one-to-two sentence explanation of this. For example: "This is an estimate based on all posts. We figure that for every two leftovers shared, at least one full meal is saved from waste!"`,
-});
-
 const estimatePlatesSavedFlow = ai.defineFlow(
   {
     name: 'estimatePlatesSavedFlow',
@@ -60,13 +46,9 @@ const estimatePlatesSavedFlow = ai.defineFlow(
   },
   async (input) => {
     const estimatedPlatesSaved = Math.floor(input.numberOfPosts * 0.5);
-    const {output} = await prompt({});
-    if (!output) {
-      throw new Error('Failed to get explanation from AI.');
-    }
     return {
       estimatedPlatesSaved,
-      explanation: output.explanation,
+      explanation: "This is an estimate based on all posts. We figure that for every two leftovers shared, at least one full meal is saved from waste!",
     };
   }
 );

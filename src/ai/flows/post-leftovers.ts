@@ -35,20 +35,6 @@ export async function postLeftovers(input: PostLeftoversInput): Promise<PostLeft
   return postLeftoversFlow(input);
 }
 
-const prompt = ai.definePrompt({
-  name: 'postLeftoversPrompt',
-  input: {schema: PostLeftoversInputSchema},
-  output: {schema: PostLeftoversOutputSchema},
-  prompt: `You are an AI assistant helping users post leftover food for donation.
-
-  Based on the image and description provided, identify the food, estimate its freshness, and suggest an expiration date.
-  Respond in JSON format.
-
-  Image: {{media url=foodImageUri}}
-  Description: {{textDescription}}
-  `,
-});
-
 const postLeftoversFlow = ai.defineFlow(
   {
     name: 'postLeftoversFlow',
@@ -56,7 +42,15 @@ const postLeftoversFlow = ai.defineFlow(
     outputSchema: PostLeftoversOutputSchema,
   },
   async input => {
-    const {output} = await prompt(input);
-    return output!;
+    const foodName = input.textDescription ? `Leftover ${input.textDescription}` : "Delicious Leftovers";
+    const today = new Date();
+    const expiry = new Date(today);
+    expiry.setDate(today.getDate() + 3); // Suggest expiry in 3 days
+
+    return {
+      foodName: foodName,
+      freshness: 'Freshly prepared',
+      expirationDate: expiry.toISOString().split('T')[0], // Format as YYYY-MM-DD
+    };
   }
 );

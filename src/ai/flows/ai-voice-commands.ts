@@ -26,72 +26,34 @@ export async function processVoiceCommand(input: ProcessVoiceCommandInput): Prom
   return processVoiceCommandFlow(input);
 }
 
-const prompt = ai.definePrompt({
-  name: 'processVoiceCommandPrompt',
-  input: {schema: ProcessVoiceCommandInputSchema},
-  output: {schema: ProcessVoiceCommandOutputSchema},
-  prompt: `You are a voice command processor for the SaveBite application. Your task is to interpret the user's voice command and determine the appropriate action to take.
-
-Available actions:
-- getStorageTips: Get storage tips for a specific food item. Parameters: food (string, optional).
-- postLeftovers: Post leftover food. No parameters.
-- findFoodNearMe: Find food donation spots nearby. No parameters.
-- scanBarcode: Scan a barcode. No parameters.
-- navigateHome: Navigate to the home screen. No parameters.
-
-Voice Command: {{{voiceCommand}}}
-
-Respond with a JSON object containing the action and any associated parameters. Ensure the action is one of the available actions listed above. If the voice command is unclear or doesn't match any known action, default to navigateHome. If the voice command asks for storage tips, attempt to extract the food item from the command.
-
-Example 1:
-Input: How should I store cooked rice?
-Output: { "action": "getStorageTips", "parameters": { "food": "cooked rice" } }
-
-Example 2:
-Input: Post leftovers
-Output: { "action": "postLeftovers" }
-
-Example 3:
-Input: Find food near me
-Output: { "action": "findFoodNearMe" }
-
-Example 4:
-Input: Scan this
-Output: { "action": "scanBarcode" }
-
-Example 5:
-Input: Go back to home
-Output: { "action": "navigateHome" }
-
-Output:
-`, safetySettings: [
-    {
-      category: 'HARM_CATEGORY_HATE_SPEECH',
-      threshold: 'BLOCK_ONLY_HIGH',
-    },
-    {
-      category: 'HARM_CATEGORY_DANGEROUS_CONTENT',
-      threshold: 'BLOCK_NONE',
-    },
-    {
-      category: 'HARM_CATEGORY_HARASSMENT',
-      threshold: 'BLOCK_MEDIUM_AND_ABOVE',
-    },
-    {
-      category: 'HARM_CATEGORY_SEXUALLY_EXPLICIT',
-      threshold: 'BLOCK_LOW_AND_ABOVE',
-    },
-  ],
-});
-
 const processVoiceCommandFlow = ai.defineFlow(
   {
     name: 'processVoiceCommandFlow',
     inputSchema: ProcessVoiceCommandInputSchema,
     outputSchema: ProcessVoiceCommandOutputSchema,
   },
-  async input => {
-    const {output} = await prompt(input);
-    return output!;
+  async (input): Promise<ProcessVoiceCommandOutput> => {
+    const command = input.voiceCommand.toLowerCase();
+
+    if (command.includes('store') || command.includes('storage')) {
+      const foodMatch = command.match(/(?:store|storage tips for) (.*)/);
+      const food = foodMatch ? foodMatch[1].trim() : 'everything';
+      return { action: 'getStorageTips', parameters: { food } };
+    }
+    if (command.includes('post') && command.includes('leftovers')) {
+      return { action: 'postLeftovers', parameters: {} };
+    }
+    if (command.includes('find') && command.includes('food')) {
+      return { action: 'findFoodNearMe', parameters: {} };
+    }
+    if (command.includes('scan')) {
+      return { action: 'scanBarcode', parameters: {} };
+    }
+    if (command.includes('home')) {
+      return { action: 'navigateHome', parameters: {} };
+    }
+    
+    // Default to navigateHome
+    return { action: 'navigateHome', parameters: {} };
   }
 );
