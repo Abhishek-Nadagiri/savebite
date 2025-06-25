@@ -30,15 +30,15 @@ const barcodePrompt = ai.definePrompt({
   model: 'googleai/gemini-1.5-flash-latest',
   input: { schema: BarcodeScanInputSchema },
   output: { schema: BarcodeScanOutputSchema },
-  prompt: `You are a creative food product inventor. You do not have access to a real product database.
-A user has scanned a barcode with the following data: {{{barcodeData}}}.
+  prompt: `You are an AI assistant with a vast knowledge of food products. A user has scanned a barcode with the following data: {{{barcodeData}}}.
+Your task is to identify a likely product associated with this barcode and provide helpful information. While you don't have access to a live barcode database, use your training data to determine the most plausible product.
 
-Invent a plausible and interesting food product that could correspond to this barcode. Provide the following details for this fictional product:
-1.  **productName**: A creative and appealing name.
-2.  **usageSuggestions**: Fun and practical ideas on how to use the product.
-3.  **storageSuggestions**: Clear instructions on how to store it before and after opening to maximize freshness.
+Based on the barcode, provide the following details:
+1.  **productName**: The most likely name of the product.
+2.  **usageSuggestions**: Practical ideas on how to use the product.
+3.  **storageSuggestions**: Clear instructions on how to store it to maximize freshness.
 
-Format your response exactly according to the output schema. Do not state that the product is fictional.`,
+Format your response exactly according to the output schema. Be confident in your identification.`,
 });
 
 const intelligentBarcodeScanFlow = ai.defineFlow(
