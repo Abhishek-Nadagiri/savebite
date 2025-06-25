@@ -59,9 +59,7 @@ Additional context (Description): {{{foodDescription}}}
 {{/if}}
 
 First, meticulously analyze the provided information, prioritizing the image, to identify the food item with the highest possible accuracy.
-Then, provide clear, concise, and actionable storage tips for that specific item. Include recommendations for refrigeration, freezing, and pantry storage if applicable. Be encouraging and friendly.
-
-Structure your response as a single string to fit the output schema.`,
+Then, provide clear, concise, and actionable storage tips for that specific item. Include recommendations for refrigeration, freezing, and pantry storage if applicable. Be encouraging and friendly.`,
 });
 
 const getStorageTipsFlow = ai.defineFlow(

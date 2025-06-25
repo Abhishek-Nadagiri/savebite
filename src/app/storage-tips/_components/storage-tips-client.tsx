@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import Image from 'next/image';
 import { useSearchParams } from 'next/navigation';
 import { useForm } from 'react-hook-form';
@@ -33,19 +33,39 @@ export function StorageTipsClient() {
   const [tips, setTips] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [preview, setPreview] = useState<string | null>(null);
+  const [autoSubmitted, setAutoSubmitted] = useState(false);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: { foodDescription: foodFromVoice || '' },
   });
   
+  const onSubmit = useCallback(async (values: z.infer<typeof formSchema>) => {
+    setIsLoading(true);
+    setTips('');
+    try {
+      const imageBase64 = values.foodImage?.[0] ? await toBase64(values.foodImage[0]) : undefined;
+      const result = await getStorageTips({
+        foodDescription: values.foodDescription,
+        foodImageUri: imageBase64,
+      });
+      setTips(result.storageTips);
+    } catch (error) {
+      console.error(error);
+      toast({ variant: 'destructive', title: 'AI Error', description: 'Could not get storage tips.' });
+    } finally {
+      setIsLoading(false);
+    }
+  }, [toast]);
+
   useEffect(() => {
-    if (foodFromVoice) {
+    if (foodFromVoice && !autoSubmitted) {
         form.setValue('foodDescription', foodFromVoice);
         // Automatically submit form if populated from voice command
         form.handleSubmit(onSubmit)();
+        setAutoSubmitted(true);
     }
-  }, [foodFromVoice, form]);
+  }, [foodFromVoice, form, onSubmit, autoSubmitted]);
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -66,24 +86,6 @@ export function StorageTipsClient() {
     reader.onload = () => resolve(reader.result as string);
     reader.onerror = error => reject(error);
   });
-
-  async function onSubmit(values: z.infer<typeof formSchema>) {
-    setIsLoading(true);
-    setTips('');
-    try {
-      const imageBase64 = values.foodImage?.[0] ? await toBase64(values.foodImage[0]) : undefined;
-      const result = await getStorageTips({
-        foodDescription: values.foodDescription,
-        foodImageUri: imageBase64,
-      });
-      setTips(result.storageTips);
-    } catch (error) {
-      console.error(error);
-      toast({ variant: 'destructive', title: 'AI Error', description: 'Could not get storage tips.' });
-    } finally {
-      setIsLoading(false);
-    }
-  }
 
   const handlePlaceholderClick = (feature: string) => {
     toast({ title: 'Coming Soon!', description: `${feature} input is not yet implemented.` });
