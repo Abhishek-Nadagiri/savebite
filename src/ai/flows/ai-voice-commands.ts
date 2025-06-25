@@ -28,6 +28,7 @@ export async function processVoiceCommand(input: ProcessVoiceCommandInput): Prom
 
 const voiceCommandPrompt = ai.definePrompt({
   name: 'voiceCommandPrompt',
+  model: 'googleai/gemini-1.5-flash-latest',
   input: { schema: ProcessVoiceCommandInputSchema },
   output: { schema: ProcessVoiceCommandOutputSchema },
   prompt: `You are the command processing unit for a food waste app. Your job is to interpret a user's voice command and map it to a specific action and its parameters.

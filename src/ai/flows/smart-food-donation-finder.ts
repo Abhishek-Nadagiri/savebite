@@ -46,6 +46,7 @@ export async function findFoodDonationSpots(input: FindFoodDonationSpotsInput): 
 
 const donationFinderPrompt = ai.definePrompt({
     name: 'donationFinderPrompt',
+    model: 'googleai/gemini-1.5-flash-latest',
     input: { schema: FindFoodDonationSpotsInputSchema },
     output: { schema: FindFoodDonationSpotsOutputSchema },
     prompt: `You are a helpful local guide. A user wants to donate food and is looking for suitable locations. Their current location is latitude: {{{userLocation.latitude}}}, longitude: {{{userLocation.longitude}}}. They want to donate "{{quantity}}" of "{{foodType}}".

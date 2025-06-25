@@ -40,6 +40,7 @@ export async function estimatePlatesSaved(
 
 const plateCounterPrompt = ai.definePrompt({
     name: 'plateCounterPrompt',
+    model: 'googleai/gemini-1.5-flash-latest',
     input: { schema: EstimatePlatesSavedInputSchema },
     output: { schema: EstimatePlatesSavedOutputSchema },
     prompt: `You are an AI analyst for a food waste reduction app. The community has made {{{numberOfPosts}}} posts about leftover food.

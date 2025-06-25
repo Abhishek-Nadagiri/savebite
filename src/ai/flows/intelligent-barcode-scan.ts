@@ -27,6 +27,7 @@ export async function intelligentBarcodeScan(input: BarcodeScanInput): Promise<B
 
 const barcodePrompt = ai.definePrompt({
   name: 'barcodePrompt',
+  model: 'googleai/gemini-1.5-flash-latest',
   input: { schema: BarcodeScanInputSchema },
   output: { schema: BarcodeScanOutputSchema },
   prompt: `You are a creative food product inventor. You do not have access to a real product database.
