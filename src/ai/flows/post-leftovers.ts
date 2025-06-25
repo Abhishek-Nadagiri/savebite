@@ -35,14 +35,18 @@ export async function postLeftovers(input: PostLeftoversInput): Promise<PostLeft
   return postLeftoversFlow(input);
 }
 
+const PostLeftoversPromptInputSchema = PostLeftoversInputSchema.extend({
+  currentDate: z.string().describe('The current date.'),
+});
+
 const postLeftoversPrompt = ai.definePrompt({
   name: 'postLeftoversPrompt',
   model: 'googleai/gemini-1.5-pro-latest',
-  input: { schema: PostLeftoversInputSchema },
+  input: { schema: PostLeftoversPromptInputSchema },
   output: { schema: PostLeftoversOutputSchema },
   prompt: `You are an expert food inspector. Analyze the provided image and optional text description to identify the food, estimate its freshness, and suggest a reasonable expiration date.
 
-The current date is ${new Date().toLocaleDateString()}.
+The current date is {{{currentDate}}}.
 
 IMAGE: {{media url=foodImageUri}}
 DESCRIPTION: {{{textDescription}}}
@@ -63,7 +67,8 @@ const postLeftoversFlow = ai.defineFlow(
     outputSchema: PostLeftoversOutputSchema,
   },
   async (input) => {
-    const { output } = await postLeftoversPrompt(input);
+    const currentDate = new Date().toLocaleDateString();
+    const { output } = await postLeftoversPrompt({ ...input, currentDate });
     return output!;
   }
 );
