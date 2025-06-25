@@ -66,6 +66,13 @@ export function PostLeftoversClient() {
     }
   }
 
+  const handleConfirmPost = () => {
+    const currentCount = parseInt(localStorage.getItem('platesSavedCount') || '0', 10);
+    const newCount = currentCount + 1;
+    localStorage.setItem('platesSavedCount', newCount.toString());
+    toast({ title: 'Posted!', description: 'Your leftover is now publicly listed.' });
+  };
+
   return (
     <Card>
       <CardHeader>
@@ -116,7 +123,7 @@ export function PostLeftoversClient() {
               <p className="font-semibold">Food Name: <span className="font-normal">{result.foodName}</span></p>
               <p className="font-semibold">Estimated Freshness: <span className="font-normal">{result.freshness}</span></p>
               <p className="font-semibold flex items-center gap-2"><Calendar className="h-4 w-4" /> Suggested Expiry: <span className="font-normal">{new Date(result.expirationDate).toLocaleDateString()}</span></p>
-              <Button className="w-full mt-4" onClick={() => toast({ title: 'Posted!', description: 'Your leftover is now publicly listed.' })}>
+              <Button className="w-full mt-4" onClick={handleConfirmPost}>
                 <CheckCircle className="mr-2 h-4 w-4" /> Confirm & Post Publicly
               </Button>
             </CardContent>

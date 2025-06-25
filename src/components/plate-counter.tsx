@@ -1,51 +1,37 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { estimatePlatesSaved } from '@/ai/flows/dynamic-plate-counter';
 import { Skeleton } from './ui/skeleton';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 export function PlateCounter() {
   const [platesSaved, setPlatesSaved] = useState<number | null>(null);
   const [displayCount, setDisplayCount] = useState(0);
-  const [explanation, setExplanation] = useState('');
 
   useEffect(() => {
-    async function fetchPlatesSaved() {
-      try {
-        const numberOfPosts = 1040; // To get the desired "520" plates saved
-        const result = await estimatePlatesSaved({ numberOfPosts });
-        setPlatesSaved(result.estimatedPlatesSaved);
-        setExplanation(result.explanation);
-      } catch (error) {
-        console.error("Failed to estimate plates saved:", error);
-        setPlatesSaved(0);
-        setExplanation("Could not calculate plates saved.");
-      }
-    }
-    fetchPlatesSaved();
+    // This effect runs once on the client after the component mounts.
+    const savedCount = localStorage.getItem('platesSavedCount');
+    const initialCount = savedCount ? parseInt(savedCount, 10) : 0;
+    setPlatesSaved(initialCount);
+    setDisplayCount(initialCount); // Start display at the saved count to avoid 0 -> X animation on every load
   }, []);
 
   useEffect(() => {
-    if (platesSaved === null) return;
-    
-    let start = 0;
-    const end = platesSaved;
-    if (start === end) {
-      setDisplayCount(end);
-      return;
-    };
-    
-    const duration = 2000;
-    const incrementTime = Math.max(10, duration / end);
-    
+    if (platesSaved === null || displayCount === platesSaved) return;
+
+    let current = displayCount;
+    const target = platesSaved;
+
+    const duration = 1000; // Animate over 1 second
+    const range = target - current;
+    const stepDuration = duration / Math.abs(range);
+
     const timer = setInterval(() => {
-      start += 1;
-      setDisplayCount(start);
-      if (start === end) {
+      current += Math.sign(range);
+      setDisplayCount(current);
+      if (current === target) {
         clearInterval(timer);
       }
-    }, incrementTime);
+    }, stepDuration);
 
     return () => clearInterval(timer);
   }, [platesSaved]);
@@ -60,20 +46,11 @@ export function PlateCounter() {
   }
 
   return (
-    <TooltipProvider>
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <div className="flex flex-col items-center gap-1 z-10 cursor-help">
-            <p className="text-6xl font-bold font-headline text-primary-foreground bg-primary rounded-xl px-6 py-2 shadow-lg">
-              {displayCount}
-            </p>
-            <p className="font-semibold text-lg text-primary">Plates Saved</p>
-          </div>
-        </TooltipTrigger>
-        <TooltipContent>
-          <p>{explanation}</p>
-        </TooltipContent>
-      </Tooltip>
-    </TooltipProvider>
+    <div className="flex flex-col items-center gap-1 z-10">
+      <p className="text-6xl font-bold font-headline text-primary-foreground bg-primary rounded-xl px-6 py-2 shadow-lg">
+        {displayCount}
+      </p>
+      <p className="font-semibold text-lg text-primary">Plates Saved</p>
+    </div>
   );
 }
