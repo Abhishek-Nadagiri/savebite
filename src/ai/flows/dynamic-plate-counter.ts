@@ -38,6 +38,20 @@ export async function estimatePlatesSaved(
   return estimatePlatesSavedFlow(input);
 }
 
+const plateCounterPrompt = ai.definePrompt({
+    name: 'plateCounterPrompt',
+    input: { schema: EstimatePlatesSavedInputSchema },
+    output: { schema: EstimatePlatesSavedOutputSchema },
+    prompt: `You are an AI analyst for a food waste reduction app. The community has made {{{numberOfPosts}}} posts about leftover food.
+
+Your task is to:
+1. Calculate an estimated number of plates saved. Use a heuristic where approximately 1 plate is saved for every 2 posts (i.e., multiply the number of posts by 0.5 and round down to the nearest whole number).
+2. Write a short, encouraging explanation about this achievement. Mention the collective impact and the simple assumption used for the estimate.
+
+Format your response to fit the output schema.
+`,
+});
+
 const estimatePlatesSavedFlow = ai.defineFlow(
   {
     name: 'estimatePlatesSavedFlow',
@@ -45,10 +59,7 @@ const estimatePlatesSavedFlow = ai.defineFlow(
     outputSchema: EstimatePlatesSavedOutputSchema,
   },
   async (input) => {
-    const estimatedPlatesSaved = Math.floor(input.numberOfPosts * 0.5);
-    return {
-      estimatedPlatesSaved,
-      explanation: "This is an estimate based on all posts. We figure that for every two leftovers shared, at least one full meal is saved from waste!",
-    };
+    const { output } = await plateCounterPrompt(input);
+    return output!;
   }
 );

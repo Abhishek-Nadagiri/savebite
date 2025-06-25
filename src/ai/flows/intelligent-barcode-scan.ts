@@ -25,20 +25,29 @@ export async function intelligentBarcodeScan(input: BarcodeScanInput): Promise<B
   return intelligentBarcodeScanFlow(input);
 }
 
+const barcodePrompt = ai.definePrompt({
+  name: 'barcodePrompt',
+  input: { schema: BarcodeScanInputSchema },
+  output: { schema: BarcodeScanOutputSchema },
+  prompt: `You are a creative food product inventor. You do not have access to a real product database.
+A user has scanned a barcode with the following data: {{{barcodeData}}}.
+
+Invent a plausible and interesting food product that could correspond to this barcode. Provide the following details for this fictional product:
+1.  **productName**: A creative and appealing name.
+2.  **usageSuggestions**: Fun and practical ideas on how to use the product.
+3.  **storageSuggestions**: Clear instructions on how to store it before and after opening to maximize freshness.
+
+Format your response exactly according to the output schema. Do not state that the product is fictional.`,
+});
+
 const intelligentBarcodeScanFlow = ai.defineFlow(
   {
     name: 'intelligentBarcodeScanFlow',
     inputSchema: BarcodeScanInputSchema,
     outputSchema: BarcodeScanOutputSchema,
   },
-  async input => {
-    const productNames = ["Organic Tomato Soup", "Whole Wheat Bread", "Crunchy Peanut Butter", "Sparkling Water"];
-    const productName = productNames[input.barcodeData.length % productNames.length];
-
-    return {
-      productName: `${productName} (from barcode ${input.barcodeData})`,
-      usageSuggestions: "A versatile product! Perfect as a standalone snack or as an ingredient in your favorite recipes. Check the packaging for specific ideas.",
-      storageSuggestions: "Store in a cool, dry place. After opening, refrigerate in an airtight container and consume within a week for best quality."
-    };
+  async (input) => {
+    const { output } = await barcodePrompt(input);
+    return output!;
   }
 );

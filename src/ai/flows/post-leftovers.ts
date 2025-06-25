@@ -35,22 +35,34 @@ export async function postLeftovers(input: PostLeftoversInput): Promise<PostLeft
   return postLeftoversFlow(input);
 }
 
+const postLeftoversPrompt = ai.definePrompt({
+  name: 'postLeftoversPrompt',
+  input: { schema: PostLeftoversInputSchema },
+  output: { schema: PostLeftoversOutputSchema },
+  prompt: `You are an expert food inspector. Analyze the provided image and optional text description to identify the food, estimate its freshness, and suggest a reasonable expiration date.
+
+The current date is ${new Date().toLocaleDateString()}.
+
+IMAGE: {{media url=foodImageUri}}
+DESCRIPTION: {{{textDescription}}}
+
+Based on the image and text, please provide the following:
+- A descriptive name for the food.
+- An estimation of its freshness (e.g., "Just made", "Looks fresh", "Best eaten soon").
+- A suggested expiration date in YYYY-MM-DD format. Assume refrigerated leftovers are good for 3-4 days unless the item is clearly more or less perishable.
+
+Format your response according to the output schema.`,
+});
+
+
 const postLeftoversFlow = ai.defineFlow(
   {
     name: 'postLeftoversFlow',
     inputSchema: PostLeftoversInputSchema,
     outputSchema: PostLeftoversOutputSchema,
   },
-  async input => {
-    const foodName = input.textDescription ? `Leftover ${input.textDescription}` : "Delicious Leftovers";
-    const today = new Date();
-    const expiry = new Date(today);
-    expiry.setDate(today.getDate() + 3); // Suggest expiry in 3 days
-
-    return {
-      foodName: foodName,
-      freshness: 'Freshly prepared',
-      expirationDate: expiry.toISOString().split('T')[0], // Format as YYYY-MM-DD
-    };
+  async (input) => {
+    const { output } = await postLeftoversPrompt(input);
+    return output!;
   }
 );

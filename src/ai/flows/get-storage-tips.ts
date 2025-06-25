@@ -1,4 +1,3 @@
-// src/ai/flows/get-storage-tips.ts
 'use server';
 
 /**
@@ -30,15 +29,25 @@ export async function getStorageTips(input: GetStorageTipsInput): Promise<GetSto
   return getStorageTipsFlow(input);
 }
 
+const getStorageTipsPrompt = ai.definePrompt({
+  name: 'getStorageTipsPrompt',
+  input: { schema: GetStorageTipsInputSchema },
+  output: { schema: GetStorageTipsOutputSchema },
+  prompt: `You are a food safety expert. A user wants to know how to store a food item to maximize its freshness.
+
+Food Item: {{{foodDescription}}}
+
+Provide clear, concise, and actionable storage tips as a single string. Include recommendations for refrigeration, freezing, and pantry storage if applicable. Be encouraging and friendly. Structure your response to fit the output schema.`,
+});
+
 const getStorageTipsFlow = ai.defineFlow(
   {
     name: 'getStorageTipsFlow',
     inputSchema: GetStorageTipsInputSchema,
     outputSchema: GetStorageTipsOutputSchema,
   },
-  async input => {
-    return {
-        storageTips: `To keep your "${input.foodDescription}" fresh, here are some mock tips:\n\n- Refrigerator: Store in an airtight container for 3-5 days.\n- Freezer: For longer storage, wrap tightly and freeze for up to 3 months.\n- Pantry: If it's a dry good, keep it in a cool, dark place away from moisture.`
-    };
+  async (input) => {
+    const { output } = await getStorageTipsPrompt(input);
+    return output!;
   }
 );

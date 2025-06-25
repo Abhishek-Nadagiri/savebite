@@ -26,34 +26,32 @@ export async function processVoiceCommand(input: ProcessVoiceCommandInput): Prom
   return processVoiceCommandFlow(input);
 }
 
+const voiceCommandPrompt = ai.definePrompt({
+  name: 'voiceCommandPrompt',
+  input: { schema: ProcessVoiceCommandInputSchema },
+  output: { schema: ProcessVoiceCommandOutputSchema },
+  prompt: `You are the command processing unit for a food waste app. Your job is to interpret a user's voice command and map it to a specific action and its parameters.
+
+The available actions are:
+- 'getStorageTips': For when a user asks how to store something. The 'food' parameter should be extracted. If no specific food is mentioned, default to 'everything'.
+- 'postLeftovers': For when a user wants to post or share their leftovers.
+- 'findFoodNearMe': For when a user is looking for available food nearby.
+- 'scanBarcode': For when a user wants to scan an item.
+- 'navigateHome': For navigating to the home screen or for ambiguous commands.
+
+User's voice command: "{{{voiceCommand}}}"
+
+Analyze the command and determine the correct action and any necessary parameters. Respond in the format defined by the output schema.`,
+});
+
 const processVoiceCommandFlow = ai.defineFlow(
   {
     name: 'processVoiceCommandFlow',
     inputSchema: ProcessVoiceCommandInputSchema,
     outputSchema: ProcessVoiceCommandOutputSchema,
   },
-  async (input): Promise<ProcessVoiceCommandOutput> => {
-    const command = input.voiceCommand.toLowerCase();
-
-    if (command.includes('store') || command.includes('storage')) {
-      const foodMatch = command.match(/(?:store|storage tips for) (.*)/);
-      const food = foodMatch ? foodMatch[1].trim() : 'everything';
-      return { action: 'getStorageTips', parameters: { food } };
-    }
-    if (command.includes('post') && command.includes('leftovers')) {
-      return { action: 'postLeftovers', parameters: {} };
-    }
-    if (command.includes('find') && command.includes('food')) {
-      return { action: 'findFoodNearMe', parameters: {} };
-    }
-    if (command.includes('scan')) {
-      return { action: 'scanBarcode', parameters: {} };
-    }
-    if (command.includes('home')) {
-      return { action: 'navigateHome', parameters: {} };
-    }
-    
-    // Default to navigateHome
-    return { action: 'navigateHome', parameters: {} };
+  async (input) => {
+    const { output } = await voiceCommandPrompt(input);
+    return output!;
   }
 );
