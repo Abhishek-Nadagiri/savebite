@@ -17,8 +17,10 @@ const ProcessVoiceCommandInputSchema = z.object({
 export type ProcessVoiceCommandInput = z.infer<typeof ProcessVoiceCommandInputSchema>;
 
 const ProcessVoiceCommandOutputSchema = z.object({
-  action: z.string().describe('The action to be performed based on the voice command. Possible values: getStorageTips, postLeftovers, findFoodNearMe, scanBarcode, navigateHome.'),
-  parameters: z.record(z.string(), z.any()).optional().describe('Optional parameters associated with the action, such as food item for storage tips.'),
+  action: z.enum(['getStorageTips', 'postLeftovers', 'findFoodNearMe', 'scanBarcode', 'navigateHome']).describe('The action to be performed based on the voice command.'),
+  parameters: z.object({
+    food: z.string().optional().describe('The food item for storage tips, if applicable. Extract from the user\'s command.'),
+  }).optional().describe('Parameters associated with the action.'),
 });
 export type ProcessVoiceCommandOutput = z.infer<typeof ProcessVoiceCommandOutputSchema>;
 
@@ -31,18 +33,20 @@ const voiceCommandPrompt = ai.definePrompt({
   model: 'googleai/gemini-1.5-flash-latest',
   input: { schema: ProcessVoiceCommandInputSchema },
   output: { schema: ProcessVoiceCommandOutputSchema },
-  prompt: `You are the command processing unit for a food waste app. Your job is to interpret a user's voice command and map it to a specific action and its parameters.
+  prompt: `You are the command processing unit for a food waste reduction app. Your task is to interpret the user's voice command and translate it into a structured action.
 
-The available actions are:
-- 'getStorageTips': For when a user asks how to store something. The 'food' parameter should be extracted. If no specific food is mentioned, default to 'everything'.
-- 'postLeftovers': For when a user wants to post or share their leftovers.
-- 'findFoodNearMe': For when a user is looking for available food nearby.
-- 'scanBarcode': For when a user wants to scan an item.
-- 'navigateHome': For navigating to the home screen or for ambiguous commands.
+Available actions are:
+- 'getStorageTips': Triggered when the user asks for storage advice. If they mention a specific food (e.g., "how to store avocados"), you must extract "avocados" into the 'food' parameter.
+- 'postLeftovers': Triggered when the user wants to share or post leftover food.
+- 'findFoodNearMe': Triggered when the user is looking for available food nearby.
+- 'scanBarcode': Triggered when the user wants to use the barcode scanning feature.
+- 'navigateHome': A fallback action for ambiguous commands or when the user wants to go to the main screen.
 
 User's voice command: "{{{voiceCommand}}}"
 
-Analyze the command and determine the correct action and any necessary parameters. Respond in the format defined by the output schema.`,
+Based on the command, determine the single most appropriate action from the list above. If the action is 'getStorageTips' and a food item is mentioned, populate the 'parameters.food' field. For all other actions, the 'parameters' object can be omitted.
+
+Respond strictly in the JSON format defined by the output schema.`,
 });
 
 const processVoiceCommandFlow = ai.defineFlow(
