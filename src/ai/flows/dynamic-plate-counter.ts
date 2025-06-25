@@ -39,18 +39,17 @@ export async function estimatePlatesSaved(
 }
 
 const prompt = ai.definePrompt({
-  name: 'estimatePlatesSavedPrompt',
-  input: {schema: EstimatePlatesSavedInputSchema},
-  output: {schema: EstimatePlatesSavedOutputSchema},
-  prompt: `You are an AI assistant that estimates the number of plates saved based on the number of leftover posts.
-
-  Your estimate should be a heuristic based on the number of posts provided by the user:
-  {{numberOfPosts}}
-
-  Your estimate of the number of plates saved should be conservative and take into account that not all posts will result in a plate being saved.
-  For each post, assume that 0.5 plates are saved on average.
-  Return an explanation of the heuristic used to estimate the number of plates saved, using at most two sentences.
-  `,
+  name: 'estimatePlatesSavedExplanationPrompt',
+  output: {
+    schema: z.object({
+      explanation: z
+        .string()
+        .describe('An explanation of the heuristic used to estimate the number of plates saved.'),
+    }),
+  },
+  prompt: `You are an AI assistant for a food-saving app. Your goal is to provide a brief, encouraging explanation for how "plates saved" are estimated.
+  The estimation is a simple heuristic: we assume that for every two leftover food posts, one plate of food is saved on average.
+  Please provide a one-to-two sentence explanation of this. For example: "This is an estimate based on all posts. We figure that for every two leftovers shared, at least one full meal is saved from waste!"`,
 });
 
 const estimatePlatesSavedFlow = ai.defineFlow(
@@ -59,8 +58,15 @@ const estimatePlatesSavedFlow = ai.defineFlow(
     inputSchema: EstimatePlatesSavedInputSchema,
     outputSchema: EstimatePlatesSavedOutputSchema,
   },
-  async input => {
-    const {output} = await prompt(input);
-    return output!;
+  async (input) => {
+    const estimatedPlatesSaved = Math.floor(input.numberOfPosts * 0.5);
+    const {output} = await prompt({});
+    if (!output) {
+      throw new Error('Failed to get explanation from AI.');
+    }
+    return {
+      estimatedPlatesSaved,
+      explanation: output.explanation,
+    };
   }
 );

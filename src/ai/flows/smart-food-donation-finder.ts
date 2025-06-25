@@ -44,48 +44,44 @@ export async function findFoodDonationSpots(input: FindFoodDonationSpotsInput): 
   return findFoodDonationSpotsFlow(input);
 }
 
-const prompt = ai.definePrompt({
-  name: 'findFoodDonationSpotsPrompt',
-  input: {schema: FindFoodDonationSpotsInputSchema},
-  output: {schema: FindFoodDonationSpotsOutputSchema},
-  prompt: `You are an AI assistant designed to help users find suitable food donation spots near them.
-
-  Given the user's current location (latitude: {{{userLocation.latitude}}}, longitude: {{{userLocation.longitude}}}),
-  the type of food they want to donate ({{{foodType}}}), and the quantity ({{{quantity}}}),
-  find nearby donation spots and rank them based on distance, opening hours, and current availability.
-
-  Consider the following factors when ranking donation spots:
-  - Distance: Shorter distance is preferred.
-  - Opening Hours: Donation spots that are currently open or will be open soon are preferred.
-  - Availability: Donation spots that are currently accepting the specified food type and quantity are preferred.
-
-  Return an array of donation spots, sorted by their suitability score in descending order.
-  Each donation spot should include its name, location (latitude and longitude), opening hours, availability, distance from the user (in kilometers), and a suitability score.
-  The suitability score should be a number between 0 and 1, with 1 being the most suitable.
-
-  Example Donation Spot:
-  {
-    "name": "Local Food Bank",
-    "location": {
-      "latitude": 34.0522,
-      "longitude": -118.2437
-    },
-    "openingHours": "9 AM - 5 PM",
-    "availability": "Accepting all types of food",
-    "distance": 2.5,
-    "suitabilityScore": 0.9
-  }
-  `,
-});
-
 const findFoodDonationSpotsFlow = ai.defineFlow(
   {
     name: 'findFoodDonationSpotsFlow',
     inputSchema: FindFoodDonationSpotsInputSchema,
     outputSchema: FindFoodDonationSpotsOutputSchema,
   },
-  async input => {\n    // Here, instead of returning dummy data or hardcoding, we call the LLM with the prompt to get the donation spots.
-    const {output} = await prompt(input);
-    return output!;
+  async (input) => {
+    // LLMs are not well-suited for providing real-time, location-based data and will hallucinate.
+    // In a real application, this would call a database or an external API.
+    // For this demo, we are returning mock data.
+    const mockSpots: FindFoodDonationSpotsOutput = [
+      {
+        name: "Community Food Pantry",
+        location: { latitude: input.userLocation.latitude + 0.01, longitude: input.userLocation.longitude - 0.015 },
+        openingHours: "Mon-Fri 9 AM - 4 PM",
+        availability: "Accepting non-perishables",
+        distance: 1.8,
+        suitabilityScore: 0.9
+      },
+      {
+        name: "Downtown Soup Kitchen",
+        location: { latitude: input.userLocation.latitude - 0.02, longitude: input.userLocation.longitude + 0.005 },
+        openingHours: "Daily 11 AM - 2 PM",
+        availability: `Accepting ${input.foodType}`,
+        distance: 2.5,
+        suitabilityScore: 0.82
+      },
+      {
+        name: "Westside Shelter",
+        location: { latitude: input.userLocation.latitude + 0.005, longitude: input.userLocation.longitude + 0.025 },
+        openingHours: "24/7",
+        availability: "Accepting all donations",
+        distance: 3.1,
+        suitabilityScore: 0.75
+      }
+    ];
+
+    // Sort by suitability score as the original prompt intended.
+    return mockSpots.sort((a, b) => b.suitabilityScore - a.suitabilityScore);
   }
 );
