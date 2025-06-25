@@ -14,7 +14,7 @@ export default function Home() {
       <header className="text-center z-10 my-8">
         <div className="flex items-center justify-center gap-3 mb-2">
             <Utensils className="h-12 w-12 text-black drop-shadow-lg" />
-            <h1 className="text-6xl font-bold font-headline text-primary drop-shadow-lg">
+            <h1 className="text-6xl font-bold font-headline text-black drop-shadow-lg">
               SaveBite
             </h1>
         </div>
