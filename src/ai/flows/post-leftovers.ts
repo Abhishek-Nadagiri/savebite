@@ -41,7 +41,7 @@ const PostLeftoversPromptInputSchema = PostLeftoversInputSchema.extend({
 
 const postLeftoversPrompt = ai.definePrompt({
   name: 'postLeftoversPrompt',
-  model: 'googleai/gemini-1.5-pro-latest',
+  model: 'googleai/gemini-1.5-flash-latest',
   input: { schema: PostLeftoversPromptInputSchema },
   output: { schema: PostLeftoversOutputSchema },
   prompt: `You are an expert food inspector. Analyze the provided image and optional text description to identify the food, estimate its freshness, and suggest a reasonable expiration date.

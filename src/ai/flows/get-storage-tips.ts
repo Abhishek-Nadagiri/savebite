@@ -45,7 +45,7 @@ export async function getStorageTips(
 
 const getStorageTipsPrompt = ai.definePrompt({
   name: 'getStorageTipsPrompt',
-  model: 'googleai/gemini-1.5-pro-latest',
+  model: 'googleai/gemini-1.5-flash-latest',
   input: { schema: GetStorageTipsInputSchema },
   output: { schema: GetStorageTipsOutputSchema },
   prompt: `You are a food storage expert. The user wants to know how to store a food item.
