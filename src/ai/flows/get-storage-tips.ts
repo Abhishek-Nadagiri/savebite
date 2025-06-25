@@ -45,7 +45,7 @@ export async function getStorageTips(
 
 const getStorageTipsPrompt = ai.definePrompt({
   name: 'getStorageTipsPrompt',
-  model: 'googleai/gemini-1.5-flash-latest',
+  model: 'googleai/gemini-1.5-pro-latest',
   input: { schema: GetStorageTipsInputSchema },
   output: { schema: GetStorageTipsOutputSchema },
   prompt: `You are a world-class expert at identifying food from images, similar to Google Lens. Your most critical task is to accurately identify the food item in the user's submission. After you have confidently identified the food, you will then act as a food safety expert to provide storage tips.

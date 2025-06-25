@@ -37,7 +37,7 @@ export async function postLeftovers(input: PostLeftoversInput): Promise<PostLeft
 
 const postLeftoversPrompt = ai.definePrompt({
   name: 'postLeftoversPrompt',
-  model: 'googleai/gemini-1.5-flash-latest',
+  model: 'googleai/gemini-1.5-pro-latest',
   input: { schema: PostLeftoversInputSchema },
   output: { schema: PostLeftoversOutputSchema },
   prompt: `You are an expert food inspector. Analyze the provided image and optional text description to identify the food, estimate its freshness, and suggest a reasonable expiration date.
