@@ -1,7 +1,7 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Mic } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
@@ -31,6 +31,29 @@ export function VoiceCommandButton() {
     }
   }, []);
   
+  const handleCommand = useCallback((action: string, params?: Record<string, any>) => {
+    switch (action) {
+      case 'getStorageTips':
+        const food = params?.food ? `?food=${encodeURIComponent(params.food)}` : '';
+        router.push(`/storage-tips${food}`);
+        break;
+      case 'postLeftovers':
+        router.push('/post-leftovers');
+        break;
+      case 'findFoodNearMe':
+        router.push('/find-food');
+        break;
+      case 'scanBarcode':
+        router.push('/scan-barcode');
+        break;
+      case 'navigateHome':
+        router.push('/');
+        break;
+      default:
+        toast({ title: "Unknown command", description: "I'm not sure how to handle that action." });
+    }
+  }, [router, toast]);
+
   useEffect(() => {
     if (!recognition) return;
 
@@ -60,30 +83,7 @@ export function VoiceCommandButton() {
       setIsListening(false);
     };
 
-  }, [recognition]);
-
-  const handleCommand = (action: string, params?: Record<string, any>) => {
-    switch (action) {
-      case 'getStorageTips':
-        const food = params?.food ? `?food=${encodeURIComponent(params.food)}` : '';
-        router.push(`/storage-tips${food}`);
-        break;
-      case 'postLeftovers':
-        router.push('/post-leftovers');
-        break;
-      case 'findFoodNearMe':
-        router.push('/find-food');
-        break;
-      case 'scanBarcode':
-        router.push('/scan-barcode');
-        break;
-      case 'navigateHome':
-        router.push('/');
-        break;
-      default:
-        toast({ title: "Unknown command", description: "I'm not sure how to handle that action." });
-    }
-  };
+  }, [recognition, toast, handleCommand]);
 
   const handleListen = () => {
     if (!recognition) {
