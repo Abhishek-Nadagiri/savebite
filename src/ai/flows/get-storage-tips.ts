@@ -48,14 +48,20 @@ const getStorageTipsPrompt = ai.definePrompt({
   model: 'googleai/gemini-1.5-flash-latest',
   input: { schema: GetStorageTipsInputSchema },
   output: { schema: GetStorageTipsOutputSchema },
-  prompt: `You are a food safety expert. A user wants to know how to store a food item to maximize its freshness.
+  prompt: `You are a world-class expert at identifying food from images, similar to Google Lens. Your most critical task is to accurately identify the food item in the user's submission. After you have confidently identified the food, you will then act as a food safety expert to provide storage tips.
 
-Use the image as the primary source if provided. Use the text description to supplement the image or as the sole source if no image is given.
+The user has provided the following information:
+{{#if foodImageUri}}
+Primary source (Image): {{media url=foodImageUri}}
+{{/if}}
+{{#if foodDescription}}
+Additional context (Description): {{{foodDescription}}}
+{{/if}}
 
-{{#if foodImageUri}}IMAGE: {{media url=foodImageUri}}{{/if}}
-{{#if foodDescription}}DESCRIPTION: {{{foodDescription}}}{{/if}}
+First, meticulously analyze the provided information, prioritizing the image, to identify the food item with the highest possible accuracy.
+Then, provide clear, concise, and actionable storage tips for that specific item. Include recommendations for refrigeration, freezing, and pantry storage if applicable. Be encouraging and friendly.
 
-First, identify the food item from the provided information. Then, provide clear, concise, and actionable storage tips for that specific item as a single string. Include recommendations for refrigeration, freezing, and pantry storage if applicable. Be encouraging and friendly. Structure your response to fit the output schema.`,
+Structure your response as a single string to fit the output schema.`,
 });
 
 const getStorageTipsFlow = ai.defineFlow(
