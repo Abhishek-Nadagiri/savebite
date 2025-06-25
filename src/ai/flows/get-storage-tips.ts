@@ -1,9 +1,9 @@
 'use server';
 
 /**
- * @fileOverview Provides food storage tips based on a text description of the food.
+ * @fileOverview Provides food storage tips based on a text description or image of the food.
  *
- * - getStorageTips - A function that accepts a text description of food and returns storage tips.
+ * - getStorageTips - A function that accepts a text description and/or image of food and returns storage tips.
  * - GetStorageTipsInput - The input type for the getStorageTips function.
  * - GetStorageTipsOutput - The return type for the getStorageTips function.
  */
@@ -11,11 +11,23 @@
 import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
 
-const GetStorageTipsInputSchema = z.object({
-  foodDescription: z
-    .string()
-    .describe('A description of the food for which storage tips are needed.'),
-});
+const GetStorageTipsInputSchema = z
+  .object({
+    foodDescription: z
+      .string()
+      .optional()
+      .describe('A description of the food for which storage tips are needed.'),
+    foodImageUri: z
+      .string()
+      .optional()
+      .describe(
+        "A photo of the food item, as a data URI that must include a MIME type and use Base64 encoding. Expected format: 'data:<mimetype>;base64,<encoded_data>'."
+      ),
+  })
+  .refine((data) => data.foodDescription || data.foodImageUri, {
+    message: 'Either a food description or a food image must be provided.',
+  });
+
 export type GetStorageTipsInput = z.infer<typeof GetStorageTipsInputSchema>;
 
 const GetStorageTipsOutputSchema = z.object({
@@ -25,7 +37,9 @@ const GetStorageTipsOutputSchema = z.object({
 });
 export type GetStorageTipsOutput = z.infer<typeof GetStorageTipsOutputSchema>;
 
-export async function getStorageTips(input: GetStorageTipsInput): Promise<GetStorageTipsOutput> {
+export async function getStorageTips(
+  input: GetStorageTipsInput
+): Promise<GetStorageTipsOutput> {
   return getStorageTipsFlow(input);
 }
 
@@ -36,9 +50,12 @@ const getStorageTipsPrompt = ai.definePrompt({
   output: { schema: GetStorageTipsOutputSchema },
   prompt: `You are a food safety expert. A user wants to know how to store a food item to maximize its freshness.
 
-Food Item: {{{foodDescription}}}
+Use the image as the primary source if provided. Use the text description to supplement the image or as the sole source if no image is given.
 
-Provide clear, concise, and actionable storage tips as a single string. Include recommendations for refrigeration, freezing, and pantry storage if applicable. Be encouraging and friendly. Structure your response to fit the output schema.`,
+{{#if foodImageUri}}IMAGE: {{media url=foodImageUri}}{{/if}}
+{{#if foodDescription}}DESCRIPTION: {{{foodDescription}}}{{/if}}
+
+First, identify the food item from the provided information. Then, provide clear, concise, and actionable storage tips for that specific item as a single string. Include recommendations for refrigeration, freezing, and pantry storage if applicable. Be encouraging and friendly. Structure your response to fit the output schema.`,
 });
 
 const getStorageTipsFlow = ai.defineFlow(

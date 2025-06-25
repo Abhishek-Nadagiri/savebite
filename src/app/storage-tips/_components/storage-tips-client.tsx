@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import Image from 'next/image';
 import { useSearchParams } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -9,13 +10,20 @@ import { getStorageTips } from '@/ai/flows/get-storage-tips';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
-import { Loader2, Lightbulb, Camera, Mic } from 'lucide-react';
+import { Loader2, Lightbulb, Mic } from 'lucide-react';
 
 const formSchema = z.object({
-  foodDescription: z.string().min(3, 'Please describe the food (e.g., "fresh strawberries").'),
-});
+  foodDescription: z.string().optional(),
+  foodImage: z.any().optional(),
+}).refine(
+  (data) => (data.foodDescription && data.foodDescription.length > 2) || data.foodImage?.[0], {
+    message: 'Please describe the food (at least 3 characters) or upload an image.',
+    path: ['foodDescription'], // Show error on the description field
+  }
+);
 
 export function StorageTipsClient() {
   const { toast } = useToast();
@@ -24,6 +32,8 @@ export function StorageTipsClient() {
 
   const [tips, setTips] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [preview, setPreview] = useState<string | null>(null);
+
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: { foodDescription: foodFromVoice || '' },
@@ -37,12 +47,35 @@ export function StorageTipsClient() {
     }
   }, [foodFromVoice, form]);
 
+  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setPreview(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    } else {
+      setPreview(null);
+    }
+  };
+
+  const toBase64 = (file: File): Promise<string> => new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.readAsDataURL(file);
+    reader.onload = () => resolve(reader.result as string);
+    reader.onerror = error => reject(error);
+  });
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setIsLoading(true);
     setTips('');
     try {
-      const result = await getStorageTips(values);
+      const imageBase64 = values.foodImage?.[0] ? await toBase64(values.foodImage[0]) : undefined;
+      const result = await getStorageTips({
+        foodDescription: values.foodDescription,
+        foodImageUri: imageBase64,
+      });
       setTips(result.storageTips);
     } catch (error) {
       console.error(error);
@@ -69,26 +102,44 @@ export function StorageTipsClient() {
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
             <FormField control={form.control} name="foodDescription" render={({ field }) => (
                 <FormItem>
-                  <FormLabel>What food do you want to store?</FormLabel>
+                  <FormLabel>Describe the food</FormLabel>
                   <FormControl>
                     <Textarea placeholder="e.g., 'half an avocado', 'cooked rice', 'fresh basil'" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
               )} />
-              
-            <div className="flex flex-col sm:flex-row gap-2">
-                <Button type="button" variant="outline" className="w-full" onClick={() => handlePlaceholderClick('Image')}>
-                    <Camera className="mr-2 h-4 w-4"/> Use Image
-                </Button>
-                <Button type="button" variant="outline" className="w-full" onClick={() => handlePlaceholderClick('Voice')}>
-                    <Mic className="mr-2 h-4 w-4"/> Use Voice
-                </Button>
-            </div>
             
-            <Button type="submit" disabled={isLoading} className="w-full">
-              {isLoading ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Getting Tips...</> : 'Get Storage Tips'}
-            </Button>
+            <div className="relative flex items-center">
+              <div className="flex-grow border-t border-muted"></div>
+              <span className="flex-shrink mx-4 text-muted-foreground text-sm">OR</span>
+              <div className="flex-grow border-t border-muted"></div>
+            </div>
+
+            <FormField control={form.control} name="foodImage" render={({ field }) => (
+              <FormItem>
+                <FormLabel>Upload an Image</FormLabel>
+                <FormControl>
+                   <div className="flex items-center gap-4">
+                    {preview && <Image src={preview} alt="Food preview" width={64} height={64} className="rounded-lg object-cover" data-ai-hint="food meal"/>}
+                    <Input type="file" accept="image/*" className="w-full" onChange={(e) => {
+                        field.onChange(e.target.files);
+                        handleFileChange(e);
+                      }} />
+                  </div>
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )} />
+
+            <div className="flex flex-col sm:flex-row gap-2 pt-4">
+              <Button type="submit" disabled={isLoading} className="w-full">
+                {isLoading ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Getting Tips...</> : 'Get Storage Tips'}
+              </Button>
+              <Button type="button" variant="outline" className="w-full" onClick={() => handlePlaceholderClick('Voice')}>
+                  <Mic className="mr-2 h-4 w-4"/> Use Voice
+              </Button>
+            </div>
           </form>
         </Form>
 
