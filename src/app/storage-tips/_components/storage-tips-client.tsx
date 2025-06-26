@@ -6,14 +6,14 @@ import { useSearchParams } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { getStorageTips } from '@/ai/flows/get-storage-tips';
+import { getStorageTips, type GetStorageTipsOutput } from '@/ai/flows/get-storage-tips';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
-import { Loader2, Lightbulb, Mic } from 'lucide-react';
+import { Loader2, Lightbulb, Mic, UtensilsCrossed } from 'lucide-react';
 
 const formSchema = z.object({
   foodDescription: z.string().optional(),
@@ -30,7 +30,7 @@ export function StorageTipsClient() {
   const searchParams = useSearchParams();
   const foodFromVoice = searchParams.get('food');
 
-  const [tips, setTips] = useState('');
+  const [result, setResult] = useState<GetStorageTipsOutput | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [preview, setPreview] = useState<string | null>(null);
   const [autoSubmitted, setAutoSubmitted] = useState(false);
@@ -42,14 +42,14 @@ export function StorageTipsClient() {
   
   const onSubmit = useCallback(async (values: z.infer<typeof formSchema>) => {
     setIsLoading(true);
-    setTips('');
+    setResult(null);
     try {
       const imageBase64 = values.foodImage?.[0] ? await toBase64(values.foodImage[0]) : undefined;
-      const result = await getStorageTips({
+      const response = await getStorageTips({
         foodDescription: values.foodDescription,
         foodImageUri: imageBase64,
       });
-      setTips(result.storageTips);
+      setResult(response);
     } catch (error) {
       console.error(error);
       toast({ variant: 'destructive', title: 'AI Error', description: 'Could not get storage tips.' });
@@ -94,9 +94,9 @@ export function StorageTipsClient() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>AI-Powered Storage Tips</CardTitle>
+        <CardTitle>AI-Powered Food Assistant</CardTitle>
         <CardDescription>
-          Ask how to store any food item to maximize its freshness and reduce waste.
+          Ask how to store any food item to get storage tips and simple recipe ideas.
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -136,7 +136,7 @@ export function StorageTipsClient() {
 
             <div className="flex flex-col sm:flex-row gap-2 pt-4">
               <Button type="submit" disabled={isLoading} className="w-full">
-                {isLoading ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Getting Tips...</> : 'Get Storage Tips'}
+                {isLoading ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Getting Info...</> : 'Get Tips & Recipes'}
               </Button>
               <Button type="button" variant="outline" className="w-full" onClick={() => handlePlaceholderClick('Voice')}>
                   <Mic className="mr-2 h-4 w-4"/> Use Voice
@@ -145,25 +145,41 @@ export function StorageTipsClient() {
           </form>
         </Form>
 
-        {isLoading && !tips && (
+        {isLoading && !result && (
           <div className="mt-8 text-center">
             <Loader2 className="mx-auto h-8 w-8 animate-spin text-primary" />
             <p className="mt-2 text-muted-foreground">Our AI is thinking...</p>
           </div>
         )}
 
-        {tips && (
-          <Card className="mt-8 bg-muted/50">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-lg">
-                <Lightbulb className="h-5 w-5 text-yellow-500" />
-                Storage Recommendations
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="whitespace-pre-wrap">{tips}</p>
-            </CardContent>
-          </Card>
+        {result && (
+          <div className="mt-8 space-y-6">
+            <Card className="bg-muted/50">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2 text-lg">
+                  <Lightbulb className="h-5 w-5 text-yellow-500" />
+                  Storage Recommendations
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="whitespace-pre-wrap">{result.storageTips}</p>
+              </CardContent>
+            </Card>
+
+            {result.recipes && (
+              <Card className="bg-muted/50">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2 text-lg">
+                    <UtensilsCrossed className="h-5 w-5 text-green-500" />
+                    Recipe Ideas
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="whitespace-pre-wrap">{result.recipes}</p>
+                </CardContent>
+              </Card>
+            )}
+          </div>
         )}
       </CardContent>
     </Card>
