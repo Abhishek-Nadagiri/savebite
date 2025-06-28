@@ -14,6 +14,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Loader2, Lightbulb, Mic, UtensilsCrossed } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 const formSchema = z.object({
   foodDescription: z.string().optional(),
@@ -34,6 +35,8 @@ export function StorageTipsClient() {
   const [isLoading, setIsLoading] = useState(false);
   const [preview, setPreview] = useState<string | null>(null);
   const [autoSubmitted, setAutoSubmitted] = useState(false);
+  const [isListening, setIsListening] = useState(false);
+  const [recognition, setRecognition] = useState<any>(null);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -66,6 +69,61 @@ export function StorageTipsClient() {
         setAutoSubmitted(true);
     }
   }, [foodFromVoice, form, onSubmit, autoSubmitted]);
+  
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+      if (SpeechRecognition) {
+        const recognitionInstance = new SpeechRecognition();
+        recognitionInstance.continuous = false;
+        recognitionInstance.lang = 'en-US';
+        recognitionInstance.interimResults = false;
+        recognitionInstance.maxAlternatives = 1;
+        setRecognition(recognitionInstance);
+      } else {
+        console.warn("Speech Recognition not supported by this browser.");
+      }
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!recognition) return;
+
+    recognition.onresult = (event: any) => {
+      const transcript = event.results[0][0].transcript;
+      toast({ title: "Heard you say...", description: `"${transcript}"` });
+      form.setValue('foodDescription', transcript);
+      form.handleSubmit(onSubmit)();
+    };
+
+    recognition.onerror = (event: any) => {
+      console.error("Speech recognition error", event.error);
+       if (event.error !== 'no-speech') {
+        toast({ variant: "destructive", title: "Mic Error", description: "Couldn't access the microphone." });
+      }
+      setIsListening(false);
+    };
+    
+    recognition.onend = () => {
+      setIsListening(false);
+    };
+
+  }, [recognition, form, onSubmit, toast]);
+
+  const handleListen = () => {
+    if (!recognition) {
+        toast({ variant: "destructive", title: "Not Supported", description: "Voice commands are not supported in your browser." });
+        return;
+    }
+    if (isListening) {
+      recognition.stop();
+      setIsListening(false);
+    } else {
+      recognition.start();
+      setIsListening(true);
+    }
+  };
+
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -86,10 +144,6 @@ export function StorageTipsClient() {
     reader.onload = () => resolve(reader.result as string);
     reader.onerror = error => reject(error);
   });
-
-  const handlePlaceholderClick = (feature: string) => {
-    toast({ title: 'Coming Soon!', description: `${feature} input is not yet implemented.` });
-  };
 
   return (
     <Card>
@@ -138,8 +192,18 @@ export function StorageTipsClient() {
               <Button type="submit" disabled={isLoading} className="w-full">
                 {isLoading ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Getting Info...</> : 'Get Tips & Recipes'}
               </Button>
-              <Button type="button" variant="outline" className="w-full" onClick={() => handlePlaceholderClick('Voice')}>
-                  <Mic className="mr-2 h-4 w-4"/> Use Voice
+              <Button 
+                type="button" 
+                variant="outline" 
+                className={cn(
+                  "w-full",
+                  isListening && "bg-red-500/20 border-red-500 text-red-600 animate-pulse"
+                )}
+                onClick={handleListen}
+                disabled={isLoading}
+              >
+                  <Mic className="mr-2 h-4 w-4"/>
+                  {isListening ? 'Listening...' : 'Use Voice'}
               </Button>
             </div>
           </form>
