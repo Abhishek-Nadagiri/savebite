@@ -148,7 +148,7 @@ export function StorageTipsClient() {
         {isLoading && !result && (
           <div className="mt-8 text-center">
             <Loader2 className="mx-auto h-8 w-8 animate-spin text-primary" />
-            <p className="mt-2 text-muted-foreground">Our AI is thinking...</p>
+            <p className="mt-2 text-muted-foreground">Working on it, please wait...</p>
           </div>
         )}
 
