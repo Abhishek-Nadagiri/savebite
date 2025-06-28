@@ -8,11 +8,25 @@ export function PlateCounter() {
   const [displayCount, setDisplayCount] = useState(0);
 
   useEffect(() => {
-    // This effect runs once on the client after the component mounts.
+    // Function to read from localStorage and update state
+    const updateCount = () => {
+      const savedCount = localStorage.getItem('platesSavedCount');
+      const newCount = savedCount ? parseInt(savedCount, 10) : 0;
+      setPlatesSaved(newCount);
+    };
+
+    // Set initial count and avoid animation on first load
     const savedCount = localStorage.getItem('platesSavedCount');
     const initialCount = savedCount ? parseInt(savedCount, 10) : 0;
     setPlatesSaved(initialCount);
-    setDisplayCount(initialCount); // Start display at the saved count to avoid 0 -> X animation on every load
+    setDisplayCount(initialCount);
+
+    // Listen for custom event to update count from other components in the same tab
+    window.addEventListener('storageUpdate', updateCount);
+
+    return () => {
+      window.removeEventListener('storageUpdate', updateCount);
+    };
   }, []);
 
   useEffect(() => {
@@ -23,6 +37,10 @@ export function PlateCounter() {
 
     const duration = 1000; // Animate over 1 second
     const range = target - current;
+    
+    // Ensure we don't divide by zero
+    if (range === 0) return;
+
     const stepDuration = duration / Math.abs(range);
 
     const timer = setInterval(() => {
@@ -34,7 +52,7 @@ export function PlateCounter() {
     }, stepDuration);
 
     return () => clearInterval(timer);
-  }, [platesSaved]);
+  }, [platesSaved, displayCount]);
 
   if (platesSaved === null) {
     return (

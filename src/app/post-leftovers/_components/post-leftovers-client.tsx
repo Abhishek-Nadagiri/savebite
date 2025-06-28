@@ -72,6 +72,7 @@ export function PostLeftoversClient() {
     const currentCount = parseInt(localStorage.getItem('platesSavedCount') || '0', 10);
     const newCount = currentCount + 1;
     localStorage.setItem('platesSavedCount', newCount.toString());
+    window.dispatchEvent(new Event('storageUpdate'));
     setIsPosted(true);
     toast({ title: 'Posted!', description: 'Your leftover is now publicly listed.' });
   };
@@ -81,6 +82,7 @@ export function PostLeftoversClient() {
     if (currentCount > 0) {
       const newCount = currentCount - 1;
       localStorage.setItem('platesSavedCount', newCount.toString());
+      window.dispatchEvent(new Event('storageUpdate'));
     }
     setIsPosted(false);
     setResult(null);
