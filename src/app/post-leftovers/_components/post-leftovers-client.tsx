@@ -12,7 +12,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
-import { Loader2, UploadCloud, CheckCircle, Calendar, Sparkles } from 'lucide-react';
+import { Loader2, UploadCloud, CheckCircle, Calendar, Sparkles, Trash2 } from 'lucide-react';
 
 const formSchema = z.object({
   foodImage: z.any().refine((file) => file?.[0], 'Food image is required.'),
@@ -24,6 +24,7 @@ export function PostLeftoversClient() {
   const [preview, setPreview] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [result, setResult] = useState<PostLeftoversOutput | null>(null);
+  const [isPosted, setIsPosted] = useState(false);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -50,6 +51,7 @@ export function PostLeftoversClient() {
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setIsLoading(true);
     setResult(null);
+    setIsPosted(false);
     try {
       const imageBase64 = await toBase64(values.foodImage[0]);
       const response = await postLeftovers({
@@ -70,7 +72,21 @@ export function PostLeftoversClient() {
     const currentCount = parseInt(localStorage.getItem('platesSavedCount') || '0', 10);
     const newCount = currentCount + 1;
     localStorage.setItem('platesSavedCount', newCount.toString());
+    setIsPosted(true);
     toast({ title: 'Posted!', description: 'Your leftover is now publicly listed.' });
+  };
+
+  const handleDeletePost = () => {
+    const currentCount = parseInt(localStorage.getItem('platesSavedCount') || '0', 10);
+    if (currentCount > 0) {
+      const newCount = currentCount - 1;
+      localStorage.setItem('platesSavedCount', newCount.toString());
+    }
+    setIsPosted(false);
+    setResult(null);
+    form.reset();
+    setPreview(null);
+    toast({ title: 'Post Deleted', description: 'Your leftover post has been removed.' });
   };
 
   return (
@@ -123,9 +139,21 @@ export function PostLeftoversClient() {
               <p className="font-semibold">Food Name: <span className="font-normal">{result.foodName}</span></p>
               <p className="font-semibold">Estimated Freshness: <span className="font-normal">{result.freshness}</span></p>
               <p className="font-semibold flex items-center gap-2"><Calendar className="h-4 w-4" /> Suggested Expiry: <span className="font-normal">{new Date(result.expirationDate).toLocaleDateString()}</span></p>
-              <Button className="w-full mt-4" onClick={handleConfirmPost}>
-                <CheckCircle className="mr-2 h-4 w-4" /> Confirm & Post Publicly
-              </Button>
+              
+              {!isPosted ? (
+                <Button className="w-full mt-4" onClick={handleConfirmPost}>
+                  <CheckCircle className="mr-2 h-4 w-4" /> Confirm & Post Publicly
+                </Button>
+              ) : (
+                <div className="mt-4 space-y-2">
+                  <div className="text-center p-3 rounded-md bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300 border border-green-200 dark:border-green-800">
+                      <p className="font-semibold flex items-center justify-center gap-2"><CheckCircle className="h-5 w-5"/>Successfully posted!</p>
+                  </div>
+                  <Button variant="destructive" className="w-full" onClick={handleDeletePost}>
+                      <Trash2 className="mr-2 h-4 w-4" /> Delete Post
+                  </Button>
+                </div>
+              )}
             </CardContent>
           </Card>
         )}
