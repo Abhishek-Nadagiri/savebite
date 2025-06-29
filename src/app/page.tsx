@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { Utensils, ScanLine, Mic } from 'lucide-react';
+import { Utensils, ScanLine, Mic, NotebookText } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import { PlateCounter } from '@/components/plate-counter';
@@ -37,6 +37,12 @@ export default function Home() {
         <Link href="/find-food" passHref>
           <Button className="w-full h-16 text-lg font-bold text-white bg-btn-blue hover:bg-btn-blue/90 rounded-xl shadow-lg shadow-blue-500/20 hover:shadow-xl hover:shadow-blue-500/30 transition-all duration-300 transform hover:-translate-y-1">
             Find Food Near Me
+          </Button>
+        </Link>
+        <Link href="/my-posts" passHref>
+          <Button variant="secondary" className="w-full h-16 text-lg font-bold rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
+            <NotebookText className="mr-2 h-6 w-6" />
+            My Posts
           </Button>
         </Link>
       </main>

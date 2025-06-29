@@ -19,12 +19,18 @@ const formSchema = z.object({
   textDescription: z.string().optional(),
 });
 
+interface Post extends PostLeftoversOutput {
+  id: string;
+  imageUri: string;
+}
+
 export function PostLeftoversClient() {
   const { toast } = useToast();
   const [preview, setPreview] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [result, setResult] = useState<PostLeftoversOutput | null>(null);
   const [isPosted, setIsPosted] = useState(false);
+  const [currentPostId, setCurrentPostId] = useState<string | null>(null);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -69,23 +75,38 @@ export function PostLeftoversClient() {
   }
 
   const handleConfirmPost = () => {
-    const currentCount = parseInt(localStorage.getItem('platesSavedCount') || '0', 10);
-    const newCount = currentCount + 1;
-    localStorage.setItem('platesSavedCount', newCount.toString());
+    if (!result || !preview) return;
+
+    const postId = Date.now().toString();
+    const newPost: Post = {
+      id: postId,
+      ...result,
+      imageUri: preview,
+    };
+    
+    const existingPosts: Post[] = JSON.parse(localStorage.getItem('leftoverPosts') || '[]');
+    const updatedPosts = [...existingPosts, newPost];
+    localStorage.setItem('leftoverPosts', JSON.stringify(updatedPosts));
+    localStorage.setItem('platesSavedCount', updatedPosts.length.toString());
     window.dispatchEvent(new Event('storageUpdate'));
+    
+    setCurrentPostId(postId);
     setIsPosted(true);
     toast({ title: 'Posted!', description: 'Your leftover is now publicly listed.' });
   };
 
   const handleDeletePost = () => {
-    const currentCount = parseInt(localStorage.getItem('platesSavedCount') || '0', 10);
-    if (currentCount > 0) {
-      const newCount = currentCount - 1;
-      localStorage.setItem('platesSavedCount', newCount.toString());
-      window.dispatchEvent(new Event('storageUpdate'));
-    }
+    if (!currentPostId) return;
+    
+    const existingPosts: Post[] = JSON.parse(localStorage.getItem('leftoverPosts') || '[]');
+    const updatedPosts = existingPosts.filter((post) => post.id !== currentPostId);
+    localStorage.setItem('leftoverPosts', JSON.stringify(updatedPosts));
+    localStorage.setItem('platesSavedCount', updatedPosts.length.toString());
+    window.dispatchEvent(new Event('storageUpdate'));
+
     setIsPosted(false);
     setResult(null);
+    setCurrentPostId(null);
     form.reset();
     setPreview(null);
     toast({ title: 'Post Deleted', description: 'Your leftover post has been removed.' });
