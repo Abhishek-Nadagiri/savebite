@@ -73,30 +73,25 @@ export function VoiceCommandButton() {
 
     recognition.onerror = (event: any) => {
       console.error("Speech recognition error", event.error);
-      setIsListening(false); // Stop listening state on any error.
+      setIsListening(false);
       
-      let errorMessage: string | null = null;
       switch (event.error) {
         case 'network':
-          errorMessage = "Speech recognition failed due to a network issue. Please check your connection.";
+          toast({ variant: "destructive", title: "Network Error", description: "Speech recognition failed. Please check your network connection." });
           break;
         case 'not-allowed':
         case 'service-not-allowed':
-          errorMessage = "Microphone access was denied. Please check your browser permissions.";
+          toast({ variant: "destructive", title: "Permission Denied", description: "Microphone access was denied. Please enable it in your browser settings." });
           break;
         case 'audio-capture':
-          errorMessage = "Microphone not found. Please ensure it is connected properly.";
+          toast({ variant: "destructive", title: "Microphone Error", description: "No microphone found. Please ensure it's connected and working." });
           break;
         case 'no-speech':
-          // This is common, no toast needed.
+          // This is a common occurrence, no toast needed.
           break;
         default:
-          errorMessage = `An unexpected error occurred: ${event.error}`;
+          toast({ variant: "destructive", title: "Mic Error", description: `An unexpected error occurred: ${event.error}` });
           break;
-      }
-      
-      if (errorMessage) {
-        toast({ variant: "destructive", title: "Mic Error", description: errorMessage });
       }
     };
     
