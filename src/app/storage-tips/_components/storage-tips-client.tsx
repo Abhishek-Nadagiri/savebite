@@ -98,10 +98,31 @@ export function StorageTipsClient() {
 
     recognition.onerror = (event: any) => {
       console.error("Speech recognition error", event.error);
-       if (event.error !== 'no-speech') {
-        toast({ variant: "destructive", title: "Mic Error", description: "Couldn't access the microphone." });
+      setIsListening(false); // Stop listening state on any error.
+
+      let errorMessage: string | null = null;
+      switch (event.error) {
+        case 'network':
+          errorMessage = "Speech recognition failed due to a network issue. Please check your connection.";
+          break;
+        case 'not-allowed':
+        case 'service-not-allowed':
+          errorMessage = "Microphone access was denied. Please check your browser permissions.";
+          break;
+        case 'audio-capture':
+          errorMessage = "Microphone not found. Please ensure it is connected properly.";
+          break;
+        case 'no-speech':
+          // This is common, no toast needed.
+          break;
+        default:
+          errorMessage = `An unexpected error occurred: ${event.error}`;
+          break;
       }
-      setIsListening(false);
+
+      if (errorMessage) {
+        toast({ variant: "destructive", title: "Mic Error", description: errorMessage });
+      }
     };
     
     recognition.onend = () => {
