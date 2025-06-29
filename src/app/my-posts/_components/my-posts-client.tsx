@@ -105,7 +105,7 @@ export function MyPostsClient() {
               <CardTitle>{post.foodName}</CardTitle>
               <CardDescription className="flex flex-col gap-1 mt-2">
                  <span className="flex items-center gap-2 text-sm"><Sparkles className="h-4 w-4" /> Freshness: {post.freshness}</span>
-                 <span className="flex items-center gap-2 text-sm"><Calendar className="h-4 w-4" /> Expires: {new Date(post.expirationDate).toLocaleDate-String()}</span>
+                 <span className="flex items-center gap-2 text-sm"><Calendar className="h-4 w-4" /> Expires: {new Date(post.expirationDate).toLocaleDateString()}</span>
               </CardDescription>
             </div>
           </CardHeader>
@@ -121,7 +121,7 @@ export function MyPostsClient() {
                   <AlertDialogTitle>Are you sure?</AlertDialogTitle>
                   <AlertDialogDescription>
                     This action cannot be undone. This will permanently delete your leftover post.
-                  </AlertDialogDescription>
+                  </D AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter>
                   <AlertDialogCancel>Cancel</AlertDialogCancel>
