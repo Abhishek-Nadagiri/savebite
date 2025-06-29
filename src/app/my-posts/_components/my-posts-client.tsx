@@ -16,7 +16,8 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
   AlertDialogTrigger,
-} from "@/components/ui/alert-dialog"
+} from "@/components/ui/alert-dialog";
+import { Skeleton } from '@/components/ui/skeleton';
 
 interface Post {
   id: string;
@@ -27,15 +28,22 @@ interface Post {
 }
 
 export function MyPostsClient() {
-  const [posts, setPosts] = useState<Post[]>([]);
+  const [posts, setPosts] = useState<Post[] | null>(null);
   const { toast } = useToast();
 
   useEffect(() => {
-    const storedPosts = JSON.parse(localStorage.getItem('leftoverPosts') || '[]');
-    setPosts(storedPosts.reverse()); // Show newest first
+    // This code runs only on the client, after the component has mounted.
+    try {
+      const storedPosts = JSON.parse(localStorage.getItem('leftoverPosts') || '[]');
+      setPosts(storedPosts.reverse()); // Show newest first
+    } catch (e) {
+      console.error("Failed to parse posts from localStorage", e);
+      setPosts([]); // Fallback to empty array on error
+    }
   }, []);
 
   const handleDeletePost = (postId: string) => {
+    if (!posts) return;
     const updatedPosts = posts.filter((post) => post.id !== postId);
     setPosts(updatedPosts);
     
@@ -48,6 +56,26 @@ export function MyPostsClient() {
     toast({ title: 'Post Deleted', description: 'Your leftover post has been removed.' });
   };
   
+  if (posts === null) {
+      return (
+          <div className="space-y-4">
+              <Card>
+                  <CardHeader className="flex flex-row items-start gap-4">
+                      <Skeleton className="h-20 w-20 rounded-lg" />
+                      <div className="flex-grow space-y-2">
+                          <Skeleton className="h-6 w-3/4" />
+                          <Skeleton className="h-4 w-1/2" />
+                          <Skeleton className="h-4 w-1/2" />
+                      </div>
+                  </CardHeader>
+                  <CardContent>
+                      <Skeleton className="h-10 w-full" />
+                  </CardContent>
+              </Card>
+          </div>
+      );
+  }
+
   if (posts.length === 0) {
     return (
       <div className="text-center py-16">
@@ -77,7 +105,7 @@ export function MyPostsClient() {
               <CardTitle>{post.foodName}</CardTitle>
               <CardDescription className="flex flex-col gap-1 mt-2">
                  <span className="flex items-center gap-2 text-sm"><Sparkles className="h-4 w-4" /> Freshness: {post.freshness}</span>
-                 <span className="flex items-center gap-2 text-sm"><Calendar className="h-4 w-4" /> Expires: {new Date(post.expirationDate).toLocaleDateString()}</span>
+                 <span className="flex items-center gap-2 text-sm"><Calendar className="h-4 w-4" /> Expires: {new Date(post.expirationDate).toLocaleDate-String()}</span>
               </CardDescription>
             </div>
           </CardHeader>
