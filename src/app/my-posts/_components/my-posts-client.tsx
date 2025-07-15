@@ -32,26 +32,42 @@ export function MyPostsClient() {
   const { toast } = useToast();
 
   useEffect(() => {
-    // This code runs only on the client, after the component has mounted.
     try {
-      const storedPosts = JSON.parse(localStorage.getItem('leftoverPosts') || '[]');
-      setPosts(storedPosts.reverse()); // Show newest first
+      const storedPostsRaw = localStorage.getItem('leftoverPosts');
+      if (storedPostsRaw) {
+        const storedPosts = JSON.parse(storedPostsRaw);
+        // Basic validation to ensure it's an array
+        if (Array.isArray(storedPosts)) {
+          setPosts(storedPosts.reverse()); // Show newest first
+        } else {
+          setPosts([]); // Data is not an array, default to empty
+        }
+      } else {
+        setPosts([]); // No data found, default to empty
+      }
     } catch (e) {
       console.error("Failed to parse posts from localStorage", e);
+      toast({ variant: 'destructive', title: 'Could not load posts', description: 'There was an issue reading your saved posts.' });
       setPosts([]); // Fallback to empty array on error
     }
-  }, []);
+  }, [toast]);
 
   const handleDeletePost = (postId: string) => {
     if (!posts) return;
     const updatedPosts = posts.filter((post) => post.id !== postId);
     setPosts(updatedPosts);
     
-    const storedPosts = JSON.parse(localStorage.getItem('leftoverPosts') || '[]');
-    const newStoredPosts = storedPosts.filter((post: Post) => post.id !== postId);
-    localStorage.setItem('leftoverPosts', JSON.stringify(newStoredPosts));
-    localStorage.setItem('platesSavedCount', newStoredPosts.length.toString());
-    window.dispatchEvent(new Event('storageUpdate'));
+    try {
+        const storedPosts = JSON.parse(localStorage.getItem('leftoverPosts') || '[]');
+        if (Array.isArray(storedPosts)) {
+            const newStoredPosts = storedPosts.filter((post: Post) => post.id !== postId);
+            localStorage.setItem('leftoverPosts', JSON.stringify(newStoredPosts));
+            localStorage.setItem('platesSavedCount', newStoredPosts.length.toString());
+            window.dispatchEvent(new Event('storageUpdate'));
+        }
+    } catch (e) {
+        console.error("Failed to update posts in localStorage", e);
+    }
 
     toast({ title: 'Post Deleted', description: 'Your leftover post has been removed.' });
   };
