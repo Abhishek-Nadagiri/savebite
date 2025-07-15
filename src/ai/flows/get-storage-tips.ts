@@ -57,23 +57,19 @@ const getStorageTipsPrompt = ai.definePrompt({
 
 Analyze the user's input. They may have provided an image, a text description, or both.
 
+- If an image is provided, use it as the primary source to identify the food.
+- If only a text description is provided, use that for identification.
+- If both are provided, rely on the image.
+
 Your task is to provide two things in your response:
 1.  **storageTips**: Clear, concise, and actionable storage tips for the identified food. Include recommendations for refrigeration, freezing, and pantry storage if applicable.
 2.  **recipes**: A few simple and creative recipe ideas using this food. Format the recipes as a markdown list (e.g., using '-' or '*').
 
-{{#if foodImageUri}}
-User's Input:
-- Image: {{media url=foodImageUri}}
 {{#if foodDescription}}
-- Description: "{{{foodDescription}}}"
+Description: "{{{foodDescription}}}"
 {{/if}}
-
-Base your answer primarily on the image.
-{{else}}
-User's Input:
-- Description: "{{{foodDescription}}}"
-
-Base your answer on the description.
+{{#if foodImageUri}}
+Image: {{media url=foodImageUri}}
 {{/if}}
 
 Be friendly and encouraging in your tone.
