@@ -12,26 +12,22 @@
 import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
 
-const GetStorageTipsObjectSchema = z.object({
-  foodDescription: z
-    .string()
-    .optional()
-    .describe('A description of the food for which storage tips are needed.'),
-  foodImageUri: z
-    .string()
-    .optional()
-    .describe(
-      "A photo of the food item, as a data URI that must include a MIME type and use Base64 encoding. Expected format: 'data:<mimetype>;base64,<encoded_data>'."
-    ),
-});
-
-const GetStorageTipsInputSchema = GetStorageTipsObjectSchema.refine(
-  (data) => data.foodDescription || data.foodImageUri,
-  {
+const GetStorageTipsInputSchema = z
+  .object({
+    foodDescription: z
+      .string()
+      .optional()
+      .describe('A description of the food for which storage tips are needed.'),
+    foodImageUri: z
+      .string()
+      .optional()
+      .describe(
+        "A photo of the food item, as a data URI that must include a MIME type and use Base64 encoding. Expected format: 'data:<mimetype>;base64,<encoded_data>'."
+      ),
+  })
+  .refine((data) => data.foodDescription || data.foodImageUri, {
     message: 'Either a food description or a food image must be provided.',
-  }
-);
-
+  });
 
 export type GetStorageTipsInput = z.infer<typeof GetStorageTipsInputSchema>;
 
@@ -41,7 +37,9 @@ const GetStorageTipsOutputSchema = z.object({
     .describe('Detailed storage tips for the described food.'),
   recipes: z
     .string()
-    .describe('A few simple recipe ideas using the identified food item, formatted as a markdown list.'),
+    .describe(
+      'A few simple recipe ideas using the identified food item, formatted as a markdown list.'
+    ),
 });
 export type GetStorageTipsOutput = z.infer<typeof GetStorageTipsOutputSchema>;
 
@@ -51,31 +49,33 @@ export async function getStorageTips(
   return getStorageTipsFlow(input);
 }
 
-const GetStorageTipsPromptInputSchema = GetStorageTipsObjectSchema.extend({
-  currentDate: z.string().describe('The current date.'),
-});
-
-
 const getStorageTipsPrompt = ai.definePrompt({
   name: 'getStorageTipsPrompt',
   model: 'googleai/gemini-1.5-flash-latest',
-  input: { schema: GetStorageTipsPromptInputSchema },
-  output: { schema: GetStorageTipsOutputSchema },
-  prompt: `You are a helpful food expert. The user wants to know how to store a food item and get some recipe ideas. Today's date is {{{currentDate}}}.
+  input: {schema: GetStorageTipsInputSchema},
+  output: {schema: GetStorageTipsOutputSchema},
+  prompt: `You are a helpful food expert. A user wants to know how to store a food item and get recipe ideas.
 
-The user has provided the following information:
-{{#if foodImageUri}}
-- An image of the food: {{media url=foodImageUri}}
-{{/if}}
-{{#if foodDescription}}
-- A text description: "{{{foodDescription}}}"
-{{/if}}
+Analyze the user's input. They may have provided an image, a text description, or both.
 
-Based on the available information (prioritizing the image if both are present), your task is to identify the food and provide two things in your response:
-1.  **storageTips**: Clear, concise, and actionable storage tips for it. Include recommendations for refrigeration, freezing, and pantry storage if applicable.
+- If an image is provided, use it as the primary source to identify the food.
+- If only a text description is provided, use that for identification.
+- If both are provided, rely on the image.
+
+Your task is to provide two things in your response:
+1.  **storageTips**: Clear, concise, and actionable storage tips for the identified food. Include recommendations for refrigeration, freezing, and pantry storage if applicable.
 2.  **recipes**: A few simple and creative recipe ideas using this food. Format the recipes as a markdown list (e.g., using '-' or '*').
 
-Be encouraging and friendly in your tone.`,
+User's Input:
+{{#if foodImageUri}}
+- Image: {{media url=foodImageUri}}
+{{/if}}
+{{#if foodDescription}}
+- Description: "{{{foodDescription}}}"
+{{/if}}
+
+Be friendly and encouraging in your tone.
+`,
 });
 
 const getStorageTipsFlow = ai.defineFlow(
@@ -85,8 +85,7 @@ const getStorageTipsFlow = ai.defineFlow(
     outputSchema: GetStorageTipsOutputSchema,
   },
   async (input) => {
-    const currentDate = new Date().toLocaleDateString();
-    const { output } = await getStorageTipsPrompt({ ...input, currentDate });
+    const {output} = await getStorageTipsPrompt(input);
     return output!;
   }
 );
