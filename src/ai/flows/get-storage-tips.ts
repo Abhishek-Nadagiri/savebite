@@ -46,12 +46,17 @@ export async function getStorageTips(
   return getStorageTipsFlow(input);
 }
 
+const GetStorageTipsPromptInputSchema = GetStorageTipsInputSchema.extend({
+  currentDate: z.string().describe('The current date.'),
+});
+
+
 const getStorageTipsPrompt = ai.definePrompt({
   name: 'getStorageTipsPrompt',
   model: 'googleai/gemini-1.5-flash-latest',
-  input: { schema: GetStorageTipsInputSchema },
+  input: { schema: GetStorageTipsPromptInputSchema },
   output: { schema: GetStorageTipsOutputSchema },
-  prompt: `You are a helpful food expert. The user wants to know how to store a food item and get some recipe ideas.
+  prompt: `You are a helpful food expert. The user wants to know how to store a food item and get some recipe ideas. Today's date is {{{currentDate}}}.
 
 {{#if foodImageUri}}
 The user has provided an image. Your primary task is to identify the food in this image: {{media url=foodImageUri}}.
@@ -78,7 +83,8 @@ const getStorageTipsFlow = ai.defineFlow(
     outputSchema: GetStorageTipsOutputSchema,
   },
   async (input) => {
-    const { output } = await getStorageTipsPrompt(input);
+    const currentDate = new Date().toLocaleDateString();
+    const { output } = await getStorageTipsPrompt({ ...input, currentDate });
     return output!;
   }
 );
