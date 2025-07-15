@@ -23,7 +23,6 @@ interface Post {
   id: string;
   foodName: string;
   freshness: string;
-
   expirationDate: string;
   imageUri: string;
 }
