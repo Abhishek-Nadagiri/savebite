@@ -63,20 +63,17 @@ const getStorageTipsPrompt = ai.definePrompt({
   output: { schema: GetStorageTipsOutputSchema },
   prompt: `You are a helpful food expert. The user wants to know how to store a food item and get some recipe ideas. Today's date is {{{currentDate}}}.
 
+The user has provided the following information:
 {{#if foodImageUri}}
-The user has provided an image. Your primary task is to identify the food in this image: {{media url=foodImageUri}}.
-  {{#if foodDescription}}
-They also provided this description for context: {{{foodDescription}}}.
-  {{/if}}
-After identifying the food, provide two things in your response:
-1.  **storageTips**: Clear, concise, and actionable storage tips for it. Include recommendations for refrigeration, freezing, and pantry storage if applicable.
-2.  **recipes**: A few simple and creative recipe ideas using this food. Format the recipes as a markdown list (e.g., using '-' or '*').
-{{else}}
-The user has provided a description of the food: {{{foodDescription}}}.
-Based on this description, provide two things in your response:
-1.  **storageTips**: Clear, concise, and actionable storage tips for it. Include recommendations for refrigeration, freezing, and pantry storage if applicable.
-2.  **recipes**: A few simple and creative recipe ideas using this food. Format the recipes as a markdown list (e.g., using '-' or '*').
+- An image of the food: {{media url=foodImageUri}}
 {{/if}}
+{{#if foodDescription}}
+- A text description: "{{{foodDescription}}}"
+{{/if}}
+
+Based on the available information (prioritizing the image if both are present), your task is to identify the food and provide two things in your response:
+1.  **storageTips**: Clear, concise, and actionable storage tips for it. Include recommendations for refrigeration, freezing, and pantry storage if applicable.
+2.  **recipes**: A few simple and creative recipe ideas using this food. Format the recipes as a markdown list (e.g., using '-' or '*').
 
 Be encouraging and friendly in your tone.`,
 });
