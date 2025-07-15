@@ -5,7 +5,6 @@
  * @fileOverview Provides food storage tips and recipe ideas based on a text description or image of the food.
  *
  * - getStorageTips - A function that accepts a text description and/or image of food and returns storage tips and recipes.
- * - GetStorageTipsInput - The input type for the getStorageTips function.
  * - GetStorageTipsOutput - The return type for the getStorageTips function.
  */
 
@@ -29,7 +28,7 @@ const GetStorageTipsInputSchema = z
     message: 'Either a food description or a food image must be provided.',
   });
 
-export type GetStorageTipsInput = z.infer<typeof GetStorageTipsInputSchema>;
+type GetStorageTipsInput = z.infer<typeof GetStorageTipsInputSchema>;
 
 const GetStorageTipsOutputSchema = z.object({
   storageTips: z
@@ -58,20 +57,23 @@ const getStorageTipsPrompt = ai.definePrompt({
 
 Analyze the user's input. They may have provided an image, a text description, or both.
 
-- If an image is provided, use it as the primary source to identify the food.
-- If only a text description is provided, use that for identification.
-- If both are provided, rely on the image.
-
 Your task is to provide two things in your response:
 1.  **storageTips**: Clear, concise, and actionable storage tips for the identified food. Include recommendations for refrigeration, freezing, and pantry storage if applicable.
 2.  **recipes**: A few simple and creative recipe ideas using this food. Format the recipes as a markdown list (e.g., using '-' or '*').
 
-User's Input:
 {{#if foodImageUri}}
+User's Input:
 - Image: {{media url=foodImageUri}}
-{{/if}}
 {{#if foodDescription}}
 - Description: "{{{foodDescription}}}"
+{{/if}}
+
+Base your answer primarily on the image.
+{{else}}
+User's Input:
+- Description: "{{{foodDescription}}}"
+
+Base your answer on the description.
 {{/if}}
 
 Be friendly and encouraging in your tone.
