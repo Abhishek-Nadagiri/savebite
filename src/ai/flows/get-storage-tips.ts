@@ -12,22 +12,26 @@
 import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
 
-const GetStorageTipsInputSchema = z
-  .object({
-    foodDescription: z
-      .string()
-      .optional()
-      .describe('A description of the food for which storage tips are needed.'),
-    foodImageUri: z
-      .string()
-      .optional()
-      .describe(
-        "A photo of the food item, as a data URI that must include a MIME type and use Base64 encoding. Expected format: 'data:<mimetype>;base64,<encoded_data>'."
-      ),
-  })
-  .refine((data) => data.foodDescription || data.foodImageUri, {
+const GetStorageTipsObjectSchema = z.object({
+  foodDescription: z
+    .string()
+    .optional()
+    .describe('A description of the food for which storage tips are needed.'),
+  foodImageUri: z
+    .string()
+    .optional()
+    .describe(
+      "A photo of the food item, as a data URI that must include a MIME type and use Base64 encoding. Expected format: 'data:<mimetype>;base64,<encoded_data>'."
+    ),
+});
+
+const GetStorageTipsInputSchema = GetStorageTipsObjectSchema.refine(
+  (data) => data.foodDescription || data.foodImageUri,
+  {
     message: 'Either a food description or a food image must be provided.',
-  });
+  }
+);
+
 
 export type GetStorageTipsInput = z.infer<typeof GetStorageTipsInputSchema>;
 
@@ -47,7 +51,7 @@ export async function getStorageTips(
   return getStorageTipsFlow(input);
 }
 
-const GetStorageTipsPromptInputSchema = GetStorageTipsInputSchema.extend({
+const GetStorageTipsPromptInputSchema = GetStorageTipsObjectSchema.extend({
   currentDate: z.string().describe('The current date.'),
 });
 
